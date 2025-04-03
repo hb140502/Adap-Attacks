@@ -84,15 +84,16 @@ else:
 
 
 
-batch_size = 128
+batch_size = 100
 
 if args.dataset == 'cifar10':
     num_classes = 10
     arch = config.arch[args.dataset]
     momentum = 0.9
-    weight_decay = 1e-4
+    weight_decay = 5e-4
     epochs = 200
     milestones = torch.tensor([100, 150])
+    gamma=0.1
     learning_rate = 0.1
 
 elif args.dataset == 'cifar100':
@@ -170,7 +171,7 @@ if os.path.exists(supervisor.get_model_dir(args)): # exit if there is an already
 
 criterion = nn.CrossEntropyLoss().cuda()
 optimizer = torch.optim.SGD(model.parameters(), learning_rate, momentum=momentum, weight_decay=weight_decay)
-scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=milestones)
+scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=milestones, gamma=gamma)
 
 if args.poison_type == 'TaCT':
     source_classes = [config.source_class]
