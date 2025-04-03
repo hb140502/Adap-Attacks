@@ -29,6 +29,11 @@ parser.add_argument('-no_normalize', default=False, action='store_true')
 parser.add_argument('-devices', type=str, default='0')
 parser.add_argument('-log', default=False, action='store_true')
 parser.add_argument('-seed', type=int, required=False, default=config.seed)
+parser.add_argument('-arch', type=str, required=False,
+                    choices=config.parser_choices['arch'],
+                    default=config.parser_default['arch'])
+parser.add_argument('-save_dir', type=str,  required=False,
+                    default=None)
 
 args = parser.parse_args()
 
@@ -55,6 +60,7 @@ if args.dataset == 'cifar10':
     data_transform_aug = transforms.Compose([
             transforms.RandomHorizontalFlip(),
             transforms.RandomCrop(32, 4),
+            transforms.RandomRotation(10),
             transforms.ToTensor(),
             transforms.Normalize([0.4914, 0.4822, 0.4465], [0.247, 0.243, 0.261]),
     ])
@@ -88,7 +94,7 @@ batch_size = 100
 
 if args.dataset == 'cifar10':
     num_classes = 10
-    arch = config.arch[args.dataset]
+    arch = config.arch[args.arch]
     momentum = 0.9
     weight_decay = 5e-4
     epochs = 200
@@ -102,7 +108,7 @@ elif args.dataset == 'cifar100':
 
 elif args.dataset == 'gtsrb':
     num_classes = 43
-    arch = config.arch[args.dataset]
+    arch = config.arch[args.arch]
     momentum = 0.9
     weight_decay = 1e-4
     epochs = 100
@@ -120,7 +126,10 @@ else:
 kwargs = {'num_workers': 2, 'pin_memory': True}
 
 # Set Up Poisoned Set
-poison_set_dir = supervisor.get_poison_set_dir(args)
+if args.save_dir:
+    poison_set_dir = args.save_dir
+else:
+    poison_set_dir = supervisor.get_poison_set_dir(args)
 
 poisoned_set_img_dir = os.path.join(poison_set_dir, 'data')
 poisoned_set_label_path = os.path.join(poison_set_dir, 'labels')

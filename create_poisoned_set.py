@@ -25,6 +25,10 @@ parser.add_argument('-alpha', type=float,  required=False,
                     default=config.parser_default['alpha'])
 parser.add_argument('-trigger', type=str,  required=False,
                     default=None)
+parser.add_argument('-data_dir', type=str,  required=False,
+                    default=config.data_dir)
+parser.add_argument('-save_dir', type=str,  required=False,
+                    default=None)
 args = parser.parse_args()
 
 tools.setup_seed(0)
@@ -32,7 +36,7 @@ tools.setup_seed(0)
 
 print('[target class : %d]' % config.target_class[args.dataset])
 
-data_dir = config.data_dir  # directory to save standard clean set
+data_dir = args.data_dir  # directory to save standard clean set
 if args.trigger is None:
     args.trigger = config.trigger_default[args.poison_type]
 
@@ -68,7 +72,11 @@ trigger_transform = transforms.Compose([
 ])
 
 # Create poisoned dataset directory for current setting
-poison_set_dir = supervisor.get_poison_set_dir(args)
+if args.save_dir:
+    poison_set_dir = args.save_dir
+else:
+    poison_set_dir = supervisor.get_poison_set_dir(args)
+
 poison_set_img_dir = os.path.join(poison_set_dir, 'data')
 
 if not os.path.exists(poison_set_dir):
