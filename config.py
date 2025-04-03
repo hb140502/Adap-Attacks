@@ -3,6 +3,7 @@ from utils import supervisor
 from utils import tools
 import torch
 from torchvision import transforms
+from torchvision.models import vgg16, densenet121
 import os
 
 
@@ -26,6 +27,7 @@ parser_choices = {
     'poison_type': ['badnet', 'blend', 'adaptive_blend', 'adaptive_patch', 'adaptive_k_way', 'none'],
     'poison_rate': [i / 1000.0 for i in range(0, 500)],
     'cover_rate': [i / 1000.0 for i in range(0, 500)],
+    'arch': ['resnet18', 'vgg16', 'densenet121']
 }
 
 parser_default = {
@@ -34,6 +36,7 @@ parser_default = {
     'poison_rate': 0,
     'cover_rate': 0,
     'alpha': 0.2,
+    'arch': 'resnet18'
 }
 
 trigger_default = {
@@ -46,11 +49,9 @@ trigger_default = {
 }
 
 arch = {
-    'cifar10': resnet.resnet20,
-    # 'cifar10': vgg.vgg16_bn,
-    # 'cifar10': mobilenetv2.mobilenetv2,
-    'gtsrb' : resnet.resnet20,
-    'abl':  wresnet.WideResNet
+    'resnet18': resnet.ResNet18,
+    'vgg16': vgg16,
+    'densenet121': densenet121
 }
 
 # adapitve-patch triggers for different datasets
