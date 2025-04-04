@@ -229,7 +229,9 @@ class poison_generator():
         img, gt = self.dataset[0]
         for j in range(k):
             img = img + self.alphas[j] * self.trigger_masks[j] * (self.trigger_marks[j] - img)
-        save_image(img, os.path.join(self.path[:-4], 'demo.png'))
+        split = self.path.split("/")[-1]
+        parent_dir = "/".join(self.path.split("/")[:-1])
+        save_image(img, os.path.join(parent_dir, f'demo_{split}.png'))
 
         return poison_indices, cover_indices, label_set
 

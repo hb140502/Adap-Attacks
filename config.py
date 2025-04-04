@@ -40,7 +40,7 @@ parser_default = {
 }
 
 trigger_default = {
-    'adaptive_blend': 'hellokitty_32.png',
+    'adaptive_blend': 'hello_kitty.jpeg',
     'adaptive_k_way': 'none',
     'adaptive_patch': 'none',
     'badnet' : 'badnet_patch.png',
