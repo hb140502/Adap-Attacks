@@ -20,10 +20,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-dataset', type=str, required=False, default=config.parser_default['dataset'],
                     choices=config.parser_choices['dataset'])
 parser.add_argument('-clean_budget', type=int, default=2000)
+parser.add_argument('-data_root', type=str,  required=False,
+                    default=config.data_dir)
 # by defaut :  we assume 2000 clean samples for defensive purpose
 
 args = parser.parse_args()
 
+args.data_root = f"{args.data_root}/{args.dataset}"
 
 """
 Get Data Set
@@ -43,7 +46,7 @@ elif args.dataset == 'cifar10':
     data_transform = transforms.Compose([
         transforms.ToTensor()
     ])
-    clean_set = datasets.CIFAR10(os.path.join(data_dir, 'cifar10'), train=False,
+    clean_set = datasets.CIFAR10(train=False, root=args.data_root,
                                   download=True, transform=data_transform)
     img_size = 32
     num_classes = 10
