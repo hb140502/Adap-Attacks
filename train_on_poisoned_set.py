@@ -34,6 +34,8 @@ parser.add_argument('-arch', type=str, required=False,
                     default=config.parser_default['arch'])
 parser.add_argument('-save_dir', type=str,  required=False,
                     default=None)
+parser.add_argument('-epochs', type=int,  required=True,
+                    choices=range(1, 201))
 
 args = parser.parse_args()
 
@@ -91,13 +93,13 @@ else:
 
 
 batch_size = 100
+epochs = args.epochs
 
 if args.dataset == 'cifar10':
     num_classes = 10
     arch = config.arch[args.arch]
     momentum = 0.9
     weight_decay = 5e-4
-    epochs = 200
     milestones = torch.tensor([100, 150])
     gamma=0.1
     learning_rate = 0.1
@@ -111,7 +113,6 @@ elif args.dataset == 'gtsrb':
     arch = config.arch[args.arch]
     momentum = 0.9
     weight_decay = 1e-4
-    epochs = 100
     milestones = torch.tensor([40, 80])
     learning_rate = 0.1
 
@@ -170,11 +171,17 @@ model = arch(num_classes=num_classes)
 milestones = milestones.tolist()
 model = nn.DataParallel(model)
 model = model.cuda()
-print(f"Will save to '{supervisor.get_model_dir(args)}'.")
+
+if args.save_dir:
+    model_dir = f"{args.save_dir}/model.pt"
+else:
+    model_dir = supervisor.get_model_dir(args)
+
+print(f"Will save to '{model_dir}'.")
 
 
-if os.path.exists(supervisor.get_model_dir(args)): # exit if there is an already trained model
-    print(f"Model '{supervisor.get_model_dir(args)}' already exists!")
+if os.path.exists(model_dir): # exit if there is an already trained model
+    print(f"Model '{model_dir}' already exists!")
     exit(0)
 
 
@@ -210,9 +217,9 @@ for epoch in range(1, epochs+1):  # train backdoored base model
     if epoch % 20 == 0:
         # Test
         tools.test(model=model, test_loader=test_set_loader, poison_test=True, poison_transform=poison_transform, num_classes=num_classes, source_classes=source_classes)
-        torch.save(model.module.state_dict(), supervisor.get_model_dir(args))
+        torch.save(model.module.state_dict(), model_dir)
 
-torch.save(model.module.state_dict(), supervisor.get_model_dir(args))
+torch.save(model.module.state_dict(), model_dir)
 if args.poison_type == 'none':
     if args.no_aug:
         torch.save(model.module.state_dict(), f'models/{args.dataset}_vanilla_no_aug.pt')
