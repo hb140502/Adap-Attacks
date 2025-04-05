@@ -35,16 +35,18 @@ def get_trigger_mask(img_size, total_pieces, masked_pieces):
 
 class poison_generator():
 
-    def __init__(self, img_size, dataset, poison_rate, path, trigger, target_class=0, alpha=0.2, cover_rate=0.01,
+    def __init__(self, img_size, trainset, testset, poison_rate, path, trigger, target_class=0, alpha=0.2, test_alpha=None, cover_rate=0.01,
                  pieces=16, mask_rate=0.5):
 
         self.img_size = img_size
-        self.dataset = dataset
+        self.trainset = trainset
+        self.testset = testset
         self.poison_rate = poison_rate
         self.path = path  # path to save the dataset
         self.target_class = target_class  # by default : target_class = 0
         self.trigger = trigger
         self.alpha = alpha
+        self.test_alpha = test_alpha
         self.cover_rate = cover_rate
         assert abs(round(sqrt(pieces)) - sqrt(pieces)) <= 1e-8
         assert img_size % round(sqrt(pieces)) == 0
@@ -53,18 +55,19 @@ class poison_generator():
         self.masked_pieces = round(self.mask_rate * self.pieces)
 
         # number of images
-        self.num_img = len(dataset)
+        self.num_train_img = len(trainset)
+        self.num_test_img = len(testset)
 
     def generate_poisoned_training_set(self):
 
         # random sampling
-        id_set = list(range(0, self.num_img))
+        id_set = list(range(0, self.num_train_img))
         random.shuffle(id_set)
-        num_poison = int(self.num_img * self.poison_rate)
+        num_poison = int(self.num_train_img * self.poison_rate)
         poison_indices = id_set[:num_poison]
         poison_indices.sort()  # increasing order
 
-        num_cover = int(self.num_img * self.cover_rate)
+        num_cover = int(self.num_train_img * self.cover_rate)
         cover_indices = id_set[num_poison:num_poison + num_cover]  # use **non-overlapping** images to cover
         cover_indices.sort()
 
@@ -76,8 +79,8 @@ class poison_generator():
         poison_id = []
         cover_id = []
 
-        for i in range(self.num_img):
-            img, gt = self.dataset[i]
+        for i in range(self.num_train_img):
+            img, gt = self.trainset[i]
 
             # cover image
             if ct < num_cover and cover_indices[ct] == i:
@@ -95,7 +98,7 @@ class poison_generator():
                 pt += 1
 
             img_file_name = '%d.png' % cnt
-            img_file_path = os.path.join(self.path, img_file_name)
+            img_file_path = os.path.join(self.path, "train", img_file_name)
             save_image(img, img_file_path)
             print('[Generate Poisoned Set] Save %s' % img_file_path)
             label_set.append(gt)
@@ -108,15 +111,34 @@ class poison_generator():
         print("Cover indices:", cover_indices)
 
         # demo
-        img, gt = self.dataset[0]
+        img, gt = self.trainset[0]
         mask = get_trigger_mask(self.img_size, self.pieces, self.masked_pieces)
         img = img + self.alpha * mask * (self.trigger - img)
-        split = self.path.split("/")[-1]
-        parent_dir = "/".join(self.path.split("/")[:-1])
-        save_image(img, os.path.join(parent_dir, f'demo_{split}.png'))
+        save_image(img, os.path.join(self.path, f'demo_train.png'))
 
         return poison_indices, cover_indices, label_set
+    
+    def generate_poisoned_testing_set(self):
+        cnt = 0
 
+        for i in range(self.num_test_img):
+            img, _ = self.testset[i]
+
+            # poisoned image without mask
+            mask = get_trigger_mask(self.img_size, self.pieces, self.masked_pieces)
+            img = img + self.test_alpha * (self.trigger - img)
+
+            img_file_name = '%d.png' % cnt
+            img_file_path = os.path.join(self.path, "test", img_file_name)
+            save_image(img, img_file_path)
+            print('[Generate Poisoned Set] Save %s' % img_file_path)
+            cnt += 1
+
+        # demo
+        img, gt = self.testset[0]
+        mask = get_trigger_mask(self.img_size, self.pieces, self.masked_pieces)
+        img = img + self.test_alpha * mask * (self.trigger - img)
+        save_image(img, os.path.join(self.path, f'demo_test.png'))
 
 class poison_transform():
 

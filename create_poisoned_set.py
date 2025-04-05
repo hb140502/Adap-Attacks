@@ -23,6 +23,7 @@ parser.add_argument('-cover_rate', type=float,  required=False,
                     default=config.parser_default['cover_rate'])
 parser.add_argument('-alpha', type=float,  required=False,
                     default=config.parser_default['alpha'])
+parser.add_argument('-test_alpha', type=float, required=False, default=None)
 parser.add_argument('-trigger', type=str,  required=False,
                     default=None)
 parser.add_argument('-data_dir', type=str,  required=False,
@@ -136,26 +137,14 @@ if args.poison_type in ['badnet', 'blend', 'none',
     elif args.poison_type == 'adaptive_blend':
 
         from poison_tool_box import adaptive_blend
-        poison_generator_train = adaptive_blend.poison_generator(img_size=img_size, dataset=train_set,
+        poison_generator = adaptive_blend.poison_generator(img_size=img_size, trainset=train_set, testset=test_set,
                                                           poison_rate=args.poison_rate,
-                                                          path=f"{poison_set_img_dir}/train", 
+                                                          path=poison_set_img_dir, 
                                                           trigger=trigger, pieces=16, mask_rate=0.5,
-                                                          target_class=config.target_class[args.dataset], alpha=alpha,
+                                                          target_class=config.target_class[args.dataset],
+                                                          alpha=args.alpha, 
+                                                          test_alpha=args.alpha if args.test_alpha is None else args.test_alpha,
                                                           cover_rate=args.cover_rate)
-        
-        poison_generator_test = adaptive_blend.poison_generator(img_size=img_size, dataset=test_set,
-                                                          poison_rate=1,
-                                                          path=f"{poison_set_img_dir}/test", 
-                                                          trigger=trigger, pieces=16, mask_rate=0.5,
-                                                          target_class=config.target_class[args.dataset], alpha=alpha,
-                                                          cover_rate=0)
-        
-        poison_generator_cover = adaptive_blend.poison_generator(img_size=img_size, dataset=test_set,
-                                                          poison_rate=0,
-                                                          path=f"{poison_set_img_dir}/cover", 
-                                                          trigger=trigger, pieces=16, mask_rate=0.5,
-                                                          target_class=config.target_class[args.dataset], alpha=alpha,
-                                                          cover_rate=1)
     
     elif args.poison_type == 'adaptive_k_way':
 
@@ -170,29 +159,13 @@ if args.poison_type in ['badnet', 'blend', 'none',
 
 
         from poison_tool_box import adaptive_patch
-        poison_generator_train = adaptive_patch.poison_generator(img_size=img_size, dataset=train_set,
+        poison_generator = adaptive_patch.poison_generator(img_size=img_size, trainset=train_set, testset=test_set,
                                                            poison_rate=args.poison_rate,
-                                                           path=f"{poison_set_img_dir}/train",
+                                                           path=poison_set_img_dir,
                                                            trigger_names=config.adaptive_patch_train_trigger_names[args.dataset],
                                                            alphas=config.adaptive_patch_train_trigger_alphas[args.dataset],
                                                            target_class=config.target_class[args.dataset],
                                                            cover_rate=args.cover_rate)
-        
-        poison_generator_test = adaptive_patch.poison_generator(img_size=img_size, dataset=test_set,
-                                                           poison_rate=1,
-                                                           path=f"{poison_set_img_dir}/test",
-                                                           trigger_names=config.adaptive_patch_train_trigger_names[args.dataset],
-                                                           alphas=config.adaptive_patch_train_trigger_alphas[args.dataset],
-                                                           target_class=config.target_class[args.dataset],
-                                                           cover_rate=0)
-        
-        poison_generator_cover = adaptive_patch.poison_generator(img_size=img_size, dataset=test_set,
-                                                           poison_rate=0,
-                                                           path=f"{poison_set_img_dir}/cover",
-                                                           trigger_names=config.adaptive_patch_train_trigger_names[args.dataset],
-                                                           alphas=config.adaptive_patch_train_trigger_alphas[args.dataset],
-                                                           target_class=config.target_class[args.dataset],
-                                                           cover_rate=1)
 
     else: # 'none'
         from poison_tool_box import none
@@ -206,20 +179,17 @@ if args.poison_type in ['badnet', 'blend', 'none',
         print('[Generate Poisoned Set] Save %d Images' % len(label_set))
 
     else:
-        for split in ["train", "test", "cover"]:
-            os.mkdir(f"{poison_set_img_dir}/{split}")
+        os.mkdir(os.path.join(poison_set_img_dir, "train"))
+        os.mkdir(os.path.join(poison_set_img_dir, "test"))
 
-        poison_indices, cover_indices, label_set = poison_generator_train.generate_poisoned_training_set()
+        poison_indices, cover_indices, label_set = poison_generator.generate_poisoned_training_set()
         print('[Generate Poisoned Set] Save %d Images' % len(label_set))
 
         cover_indices_path = os.path.join(poison_set_dir, 'cover_indices')
         torch.save(cover_indices, cover_indices_path)
         print('[Generate Poisoned Set] Save %s' % cover_indices_path)
 
-        poison_generator_test.generate_poisoned_training_set()
-        poison_generator_cover.generate_poisoned_training_set()
-
-
+        poison_generator.generate_poisoned_testing_set()
 
 
     label_path = os.path.join(poison_set_dir, 'labels')
