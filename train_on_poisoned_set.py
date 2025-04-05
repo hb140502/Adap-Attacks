@@ -7,6 +7,10 @@ from utils import supervisor, tools
 import config
 from tqdm import tqdm
 
+# Disable tqdm globally
+from functools import partialmethod
+tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-dataset', type=str, required=False,
                     default=config.parser_default['dataset'],
@@ -252,10 +256,10 @@ for epoch in range(1, epochs+1):  # train backdoored base model
     preds = torch.cat(preds, dim=0)
     labels = torch.cat(labels, dim=0)
     train_acc = (torch.eq(preds, labels).int().sum()) / preds.shape[0]
-    print('\n<Backdoor Training> Train Epoch: {} \tLoss: {:.6f}, Train Acc: {:.6f}, lr: {:.2f}'.format(epoch, loss.item(), train_acc, optimizer.param_groups[0]['lr']))
+    print('\n<Backdoor Training> Train Epoch: {} \tLoss: {:.6f}, Train Acc: {:.6f}, lr: {:.3f}'.format(epoch, loss.item(), train_acc, optimizer.param_groups[0]['lr']))
     scheduler.step()
 
-    if epoch % 20 == 0:
+    if epoch % 10 == 0:
         # Test
         tools.test(model=model, test_loader=test_set_loader, poison_test=True, poison_transform=poison_transform, num_classes=num_classes, source_classes=source_classes)
         torch.save(model.module.state_dict(), model_dir)
