@@ -132,7 +132,7 @@ if args.save_dir:
 else:
     poison_set_dir = supervisor.get_poison_set_dir(args)
 
-poisoned_set_img_dir = os.path.join(poison_set_dir, 'data')
+poisoned_set_img_dir = os.path.join(poison_set_dir, 'data/train')
 poisoned_set_label_path = os.path.join(poison_set_dir, 'labels')
 poison_indices_path = os.path.join(poison_set_dir, 'poison_indices')
 
