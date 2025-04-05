@@ -105,6 +105,8 @@ def get_poison_transform(poison_type, dataset_name, target_class, source_class=1
 
     if dataset_name in ['gtsrb','cifar10', 'cifar100']:
         img_size = 32
+    elif dataset_name == 'tiny':
+        img_size = 64
     elif dataset_name == 'imagenette':
         img_size = 224
     else:
@@ -116,6 +118,9 @@ def get_poison_transform(poison_type, dataset_name, target_class, source_class=1
     elif dataset_name == 'cifar100':
         mean = [0.5071, 0.4865, 0.4409]
         std = [0.2673, 0.2564, 0.2762]
+    elif dataset_name == 'tiny':
+        mean = [0.4802, 0.4481, 0.3975]
+        std = [0.2302, 0.2265, 0.2262]
     elif dataset_name == 'gtsrb':
         mean = (0.3337, 0.3064, 0.3171)
         std = (0.2672, 0.2564, 0.2629)

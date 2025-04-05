@@ -73,6 +73,21 @@ elif args.dataset == 'cifar100':
                                     download=True, transform=data_transform)
     img_size = 32
     num_classes = 100
+elif args.dataset == 'tiny':
+    data_transform = transforms.Compose([
+        transforms.ToTensor()
+    ])
+    from utils.Tiny import TinyImageNet
+    train_set = TinyImageNet(root=os.path.join(data_dir, 'tiny'),
+                             split='train',
+                             transform=data_transform,
+                             download=True)
+    test_set = TinyImageNet(root=os.path.join(data_dir, 'tiny'),
+                             split='val',
+                             transform=data_transform,
+                             download=True)
+    img_size = 64
+    num_classes = 200
 elif args.dataset == 'imagenette':
     raise  NotImplementedError('imagenette unsupported!')
 else:

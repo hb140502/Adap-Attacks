@@ -58,6 +58,17 @@ elif args.dataset == 'cifar100':
                                   download=True, transform=data_transform)
     img_size = 32
     num_classes = 100
+elif args.dataset == 'tiny':
+    data_transform = transforms.Compose([
+        transforms.ToTensor()
+    ])
+    from utils.Tiny import TinyImageNet
+    clean_set = TinyImageNet(root=args.data_root,
+                             split='val',
+                             transform=data_transform,
+                             download=True)
+    img_size = 64
+    num_classes = 200
 elif args.dataset == 'imagenette':
     print('<To Be Implemented> Dataset = %s' % args.dataset)
     exit(0)
