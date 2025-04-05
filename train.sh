@@ -40,7 +40,7 @@ fi
 echo "!!! FINISHED TRAINING !!!"
 
 # Remove clean images from trainset to save space
-python remove_clean_imgs.py -save_dir=$record_dir
+python remove_clean_imgs.py -save_dir=$record_dir/$attack_id
 
 cd $record_dir    
 tar -cf "${attack_id}_${timestamp}.tar" $attack_id && rm -rf $attack_id

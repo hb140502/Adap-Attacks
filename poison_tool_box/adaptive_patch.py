@@ -127,7 +127,7 @@ Poison with k triggers.
 
 class poison_generator():
 
-    def __init__(self, img_size, trainset, testset, poison_rate, path, trigger_names, alphas, target_class=0, cover_rate=0.01):
+    def __init__(self, img_size, trainset, testset, poison_rate, path, trigger_names, alphas, test_trigger_names, test_alphas, target_class=0, cover_rate=0.01):
 
         self.img_size = img_size
         self.trainset = trainset
@@ -145,28 +145,36 @@ class poison_generator():
         trigger_transform = transforms.Compose([
             transforms.ToTensor()
         ])
+
+        def get_triggers(trigger_names, trigger_marks, trigger_masks):
+            for i in range(len(trigger_names)):
+                trigger_path = os.path.join(config.triggers_dir, trigger_names[i])
+                trigger_mask_path = os.path.join(config.triggers_dir, 'mask_%s' % trigger_names[i])
+
+                trigger = Image.open(trigger_path).convert("RGB")
+                trigger = trigger_transform(trigger)
+
+                if os.path.exists(trigger_mask_path):  # if there explicitly exists a trigger mask (with the same name)
+                    trigger_mask = Image.open(trigger_mask_path).convert("RGB")
+                    trigger_mask = transforms.ToTensor()(trigger_mask)[0]  # only use 1 channel
+                else:  # by default, all black pixels are masked with 0's
+                    trigger_mask = torch.logical_or(torch.logical_or(trigger[0] > 0, trigger[1] > 0),
+                                                    trigger[2] > 0).float()
+
+                trigger_marks.append(trigger)
+                trigger_masks.append(trigger_mask)
+
+                print(f"Trigger #{i}: {trigger_names[i]}")
+
         self.trigger_marks = []
         self.trigger_masks = []
-        self.alphas = []
-        for i in range(len(trigger_names)):
-            trigger_path = os.path.join(config.triggers_dir, trigger_names[i])
-            trigger_mask_path = os.path.join(config.triggers_dir, 'mask_%s' % trigger_names[i])
+        self.alphas = alphas
+        get_triggers(trigger_names, self.trigger_marks, self.trigger_masks)
 
-            trigger = Image.open(trigger_path).convert("RGB")
-            trigger = trigger_transform(trigger)
-
-            if os.path.exists(trigger_mask_path):  # if there explicitly exists a trigger mask (with the same name)
-                trigger_mask = Image.open(trigger_mask_path).convert("RGB")
-                trigger_mask = transforms.ToTensor()(trigger_mask)[0]  # only use 1 channel
-            else:  # by default, all black pixels are masked with 0's
-                trigger_mask = torch.logical_or(torch.logical_or(trigger[0] > 0, trigger[1] > 0),
-                                                trigger[2] > 0).float()
-
-            self.trigger_marks.append(trigger)
-            self.trigger_masks.append(trigger_mask)
-            self.alphas.append(alphas[i])
-
-            print(f"Trigger #{i}: {trigger_names[i]}")
+        self.test_trigger_marks = []
+        self.test_trigger_masks = []
+        self.test_alphas = test_alphas
+        get_triggers(test_trigger_names, self.test_trigger_marks, self.test_trigger_masks)
 
     def generate_poisoned_training_set(self):
 
@@ -229,8 +237,7 @@ class poison_generator():
 
         # demo
         img, gt = self.trainset[0]
-        for j in range(k):
-            img = img + self.alphas[j] * self.trigger_masks[j] * (self.trigger_marks[j] - img)
+        img = img + self.alphas[0] * self.trigger_masks[0] * (self.trigger_marks[0] - img)
         save_image(img, os.path.join(self.path, f'demo_train.png'))
 
         return poison_indices, cover_indices, label_set
@@ -239,13 +246,13 @@ class poison_generator():
 
         cnt = 0
 
-        k = len(self.trigger_marks)
+        k = len(self.test_trigger_marks)
 
         for i in range(self.num_test_img):
             img, gt = self.testset[i]
 
             for j in range(k):
-                img = img + self.alphas[j] * self.trigger_masks[j] * (self.trigger_marks[j] - img)
+                img = img + self.test_alphas[j] * self.test_trigger_masks[j] * (self.test_trigger_marks[j] - img)
 
             img_file_name = '%d.png' % cnt
             img_file_path = os.path.join(self.path, "test", img_file_name)
@@ -256,7 +263,7 @@ class poison_generator():
         # demo
         img, gt = self.testset[0]
         for j in range(k):
-            img = img + self.alphas[j] * self.trigger_masks[j] * (self.trigger_marks[j] - img)
+            img = img + self.test_alphas[j] * self.test_trigger_masks[j] * (self.test_trigger_marks[j] - img)
         save_image(img, os.path.join(self.path, f'demo_test.png'))
 
 class poison_transform():

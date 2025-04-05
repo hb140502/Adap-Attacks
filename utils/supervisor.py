@@ -105,30 +105,39 @@ def get_poison_transform(poison_type, dataset_name, target_class, source_class=1
 
     if dataset_name in ['gtsrb','cifar10', 'cifar100']:
         img_size = 32
+    elif dataset_name == 'tiny':
+        img_size = 64
     elif dataset_name == 'imagenette':
         img_size = 224
     else:
         raise NotImplementedError('<Undefined> Dataset = %s' % dataset_name)
 
     if dataset_name == 'cifar10':
-        normalizer = transforms.Compose([
-            transforms.Normalize([0.4914, 0.4822, 0.4465], [0.247, 0.243, 0.261])
-        ])
-        denormalizer = transforms.Compose([
-            transforms.Normalize([-0.4914 / 0.247, -0.4822 / 0.243, -0.4465 / 0.261],
-                                    [1 / 0.247, 1 / 0.243, 1 / 0.261])
-        ])
+        mean = [0.4914, 0.4822, 0.4465]
+        std = [0.247, 0.243, 0.261]
+    elif dataset_name == 'cifar100':
+        mean = [0.5071, 0.4865, 0.4409]
+        std = [0.2673, 0.2564, 0.2762]
+    elif dataset_name == 'tiny':
+        mean = [0.4802, 0.4481, 0.3975]
+        std = [0.2302, 0.2265, 0.2262]
     elif dataset_name == 'gtsrb':
-        normalizer = transforms.Compose([
-            transforms.Normalize((0.3337, 0.3064, 0.3171), (0.2672, 0.2564, 0.2629))
-        ])
-        denormalizer = transforms.Compose([
-            transforms.Normalize((-0.3337 / 0.2672, -0.3064 / 0.2564, -0.3171 / 0.2629),
-                                    (1.0 / 0.2672, 1.0 / 0.2564, 1.0 / 0.2629)),
-        ])
+        mean = (0.3337, 0.3064, 0.3171)
+        std = (0.2672, 0.2564, 0.2629)
     else:
         raise Exception("Invalid Dataset")
 
+    normalizer = transforms.Compose([
+            transforms.Normalize(mean, std)
+        ])
+
+    mean_inv = [-m / s for m, s in zip(mean, std)]
+    std_inv = [1 / s for s in std]
+    
+    denormalizer = transforms.Compose([
+        transforms.Normalize(mean_inv, std_inv)
+    ])
+    
     poison_transform = None
     trigger = None
     trigger_mask = None

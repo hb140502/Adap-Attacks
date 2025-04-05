@@ -64,7 +64,30 @@ elif args.dataset == 'cifar10':
     img_size = 32
     num_classes = 10
 elif args.dataset == 'cifar100':
-    raise NotImplementedError('cifar100 unsupported!')
+    data_transform = transforms.Compose([
+        transforms.ToTensor(),
+    ])
+    train_set = datasets.CIFAR100(os.path.join(data_dir, 'cifar100'), train=True,
+                                    download=True, transform=data_transform)
+    test_set = datasets.CIFAR100(os.path.join(data_dir, 'cifar100'), train=False,
+                                    download=True, transform=data_transform)
+    img_size = 32
+    num_classes = 100
+elif args.dataset == 'tiny':
+    data_transform = transforms.Compose([
+        transforms.ToTensor()
+    ])
+    from utils.Tiny import TinyImageNet
+    train_set = TinyImageNet(root=os.path.join(data_dir, 'tiny'),
+                             split='train',
+                             transform=data_transform,
+                             download=True)
+    test_set = TinyImageNet(root=os.path.join(data_dir, 'tiny'),
+                             split='val',
+                             transform=data_transform,
+                             download=True)
+    img_size = 64
+    num_classes = 200
 elif args.dataset == 'imagenette':
     raise  NotImplementedError('imagenette unsupported!')
 else:
@@ -164,6 +187,8 @@ if args.poison_type in ['badnet', 'blend', 'none',
                                                            path=poison_set_img_dir,
                                                            trigger_names=config.adaptive_patch_train_trigger_names[args.dataset],
                                                            alphas=config.adaptive_patch_train_trigger_alphas[args.dataset],
+                                                           test_trigger_names=config.adaptive_patch_test_trigger_names[args.dataset], 
+                                                           test_alphas=config.adaptive_patch_test_trigger_alphas[args.dataset],
                                                            target_class=config.target_class[args.dataset],
                                                            cover_rate=args.cover_rate)
 

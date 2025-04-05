@@ -11,6 +11,8 @@ data_dir = './data' # defaul clean dataset directory
 triggers_dir = './triggers' # default triggers directory
 target_class = {
     'cifar10' : 0,
+    'cifar100' : 0,
+    'tiny': 0,
     'gtsrb' : 2
 }
 
@@ -23,7 +25,7 @@ record_poison_seed = False
 record_model_arch = False
 
 parser_choices = {
-    'dataset': ['gtsrb','cifar10', 'cifar100', 'imagenette'],
+    'dataset': ['gtsrb','cifar10', 'cifar100', 'tiny', 'imagenette'],
     'poison_type': ['badnet', 'blend', 'adaptive_blend', 'adaptive_patch', 'adaptive_k_way', 'none'],
     'poison_rate': [i / 1000.0 for i in range(0, 500)],
     'cover_rate': [i / 1000.0 for i in range(0, 500)],
@@ -62,6 +64,18 @@ adaptive_patch_train_trigger_names = {
         'badnet_patch4_32.png',
         'trojan_square_32.png',
     ],
+    'cifar100': [
+        'phoenix_corner_32.png',
+        'firefox_corner_32.png',
+        'badnet_patch4_32.png',
+        'trojan_square_32.png',
+    ],
+    'tiny': [
+        'phoenix_corner_64.png',
+        'firefox_corner_64.png',
+        'badnet_patch4_64.png',
+        'trojan_square_64.png',
+    ],
     'gtsrb': [
         'phoenix_corner_32.png',
         'firefox_corner_32.png',
@@ -77,6 +91,18 @@ adaptive_patch_train_trigger_alphas = {
         0.5,
         0.3,
     ],
+    'cifar100': [
+        0.5,
+        0.2,
+        0.5,
+        0.3,
+    ],
+    'tiny': [
+        0.5,
+        0.2,
+        0.5,
+        0.3,
+    ],
     'gtsrb': [
         0.5,
         0.2,
@@ -87,8 +113,16 @@ adaptive_patch_train_trigger_alphas = {
 
 adaptive_patch_test_trigger_names = {
     'cifar10': [
-        'phoenix_corner2_32.png',
+        'phoenix_corner_32.png',
         'badnet_patch4_32.png',
+    ],
+    'cifar100': [
+        'phoenix_corner_32.png',
+        'badnet_patch4_32.png',
+    ],
+    'tiny': [
+        'phoenix_corner_64.png',
+        'badnet_patch4_64.png',
     ],
     'gtsrb': [
         'firefox_corner_32.png',
@@ -98,6 +132,14 @@ adaptive_patch_test_trigger_names = {
 
 adaptive_patch_test_trigger_alphas = {
     'cifar10': [
+        1,
+        1,
+    ],
+    'cifar100': [
+        1,
+        1,
+    ],
+    'tiny': [
         1,
         1,
     ],
