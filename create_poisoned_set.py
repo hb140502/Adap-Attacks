@@ -172,6 +172,8 @@ if args.poison_type in ['badnet', 'blend', 'none',
                                                            path=poison_set_img_dir,
                                                            trigger_names=config.adaptive_patch_train_trigger_names[args.dataset],
                                                            alphas=config.adaptive_patch_train_trigger_alphas[args.dataset],
+                                                           test_trigger_names=config.adaptive_patch_test_trigger_names[args.dataset], 
+                                                           test_alphas=config.adaptive_patch_test_trigger_alphas[args.dataset],
                                                            target_class=config.target_class[args.dataset],
                                                            cover_rate=args.cover_rate)
 
