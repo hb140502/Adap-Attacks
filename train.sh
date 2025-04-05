@@ -28,7 +28,7 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
-python train_on_poisoned_set.py -dataset=$dataset -poison_type=$attack -save_dir=$record_dir/$attack_id $attack_opts
+python train_on_poisoned_set.py -dataset=$dataset -poison_type=$attack -epochs=$n_epochs -save_dir=$record_dir/$attack_id $attack_opts
 
 # Handle training failure
 if [[ $? -ne 0 ]]; then
