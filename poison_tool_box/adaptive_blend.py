@@ -131,7 +131,7 @@ class poison_generator():
             img_file_name = '%d.png' % cnt
             img_file_path = os.path.join(self.path, "test", img_file_name)
             save_image(img, img_file_path)
-            print('[Generate Poisoned Set] Save %s' % img_file_path)
+            # print('[Generate Poisoned Set] Save %s' % img_file_path)
             cnt += 1
 
         # demo
