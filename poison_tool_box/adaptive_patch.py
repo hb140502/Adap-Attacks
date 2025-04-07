@@ -251,6 +251,10 @@ class poison_generator():
         for i in range(self.num_test_img):
             img, gt = self.testset[i]
 
+            # Do not save poisoned images originally from the target class
+            if gt == self.target_class:
+                continue
+
             for j in range(k):
                 img = img + self.test_alphas[j] * self.test_trigger_masks[j] * (self.test_trigger_marks[j] - img)
 

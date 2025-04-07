@@ -122,7 +122,11 @@ class poison_generator():
         cnt = 0
 
         for i in range(self.num_test_img):
-            img, _ = self.testset[i]
+            img, gt = self.testset[i]
+
+            # Do not save poisoned images originally from the target class
+            if gt == self.target_class:
+                continue
 
             # poisoned image without mask
             mask = get_trigger_mask(self.img_size, self.pieces, self.masked_pieces)
