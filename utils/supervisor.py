@@ -152,7 +152,7 @@ def get_poison_transform(poison_type, dataset_name, target_class, source_class=1
 
         if trigger_name != 'none': # none for SIG
             trigger_path = os.path.join(config.triggers_dir, trigger_name)
-            trigger = Image.open(trigger_path).convert("RGB").resize(size=(img_size, img_size), resample=Image.Resampling.BILINEAR)
+            trigger = Image.open(trigger_path).convert("RGB")
 
             trigger_mask_path = os.path.join(config.triggers_dir, 'mask_%s' % trigger_name)
 
