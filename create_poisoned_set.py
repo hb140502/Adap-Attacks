@@ -126,7 +126,7 @@ if args.poison_type in ['badnet', 'blend', 'none',
         print('trigger: %s' % trigger_path)
 
         trigger_path = os.path.join(config.triggers_dir, trigger_name)
-        trigger = Image.open(trigger_path).convert("RGB").resize(size=(img_size, img_size), resample=Image.Resampling.BILINEAR)
+        trigger = Image.open(trigger_path).convert("RGB")
         trigger = trigger_transform(trigger)
 
         trigger_mask_path = os.path.join(config.triggers_dir, 'mask_%s' % trigger_name)
