@@ -11,9 +11,18 @@ timestamp=$(date +"T%d-%m_%H-%M")
 pratio_label=$(echo p$pratio | tr . -)
 attack_id="${attack}_${model}_${dataset}_${pratio_label}"
 
+function get_blend_trigger() {
+    if [[ $dataset == "tiny" ]]; then
+        echo "hellokitty_64.png"
+    else
+        echo "hellokitty_32.png"
+    fi
+}
+
 # Attack options depend on attack type (adap-blend vs adap-patch)
 if [[ $attack == "adaptive_blend" ]]; then
-    attack_opts="-poison_rate=$pratio -cover_rate=$pratio -alpha=0.15 -test_alpha=0.2"
+    trigger=$(get_blend_trigger)
+    attack_opts="-poison_rate=$pratio -cover_rate=$pratio -trigger=$trigger -alpha=0.15 -test_alpha=0.2"
 else
     cratio=$(echo "2 * $pratio" | bc) # Conservatism ratio = 2/3, i.e. twice as many cover as poisoned samples
     attack_opts="-poison_rate=$pratio -cover_rate=$cratio"
