@@ -64,9 +64,9 @@ if args.log:
 if args.dataset == 'cifar10':
 
     data_transform_aug = transforms.Compose([
-            transforms.RandomHorizontalFlip(),
             transforms.RandomCrop(32, 4),
             transforms.RandomRotation(10),
+            transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize([0.4914, 0.4822, 0.4465], [0.247, 0.243, 0.261]),
     ])
