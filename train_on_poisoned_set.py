@@ -126,32 +126,20 @@ else:
 batch_size = 100
 epochs = args.epochs
 
-if args.dataset == 'cifar10':
-    num_classes = 10
-    arch = config.arch[args.arch]
-    momentum = 0.9
-    weight_decay = 5e-4
-    milestones = torch.tensor([100, 150])
-    gamma=0.1
-    learning_rate = 0.1
+if args.dataset in ['cifar10', 'cifar100', 'tiny']:
+    if args.dataset == 'cifar10':
+        num_classes = 10
+    elif args.dataset == 'cifar10':
+        num_classes = 100
+    else:
+        num_classes = 200
 
-elif args.dataset == 'cifar100':
-    num_classes = 100
     arch = config.arch[args.arch]
     momentum = 0.9
     weight_decay = 5e-4
     milestones = torch.tensor([100, 150])
     gamma=0.1
-    learning_rate = 0.1
-
-elif args.dataset == 'tiny':
-    num_classes = 200
-    arch = config.arch[args.arch]
-    momentum = 0.9
-    weight_decay = 5e-4
-    milestones = torch.tensor([100, 150])
-    gamma=0.1
-    learning_rate = 0.1
+    learning_rate = 0.01
 
 elif args.dataset == 'gtsrb':
     num_classes = 43
