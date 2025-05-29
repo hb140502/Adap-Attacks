@@ -11,6 +11,16 @@ timestamp=$(date +"T%d-%m_%H-%M")
 pratio_label=$(echo p$pratio | tr . -)
 attack_id="${attack}_${model}_${dataset}_${pratio_label}"
 
+# pyenv activate bb
+source /vol/csedu-nobackup/project/hberendsen/.pyenv/versions/bb/bin/activate
+
+gpu=$(python get_gpu.py)
+
+if [[ ! $gpu =~ "RTX 2080 Ti" ]]; then
+    echo "Unexpected GPU: ${gpu}"
+    exit 1
+fi
+
 function get_blend_trigger() {
     if [[ $dataset == "tiny" ]]; then
         echo "hellokitty_64.png"
