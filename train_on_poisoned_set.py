@@ -139,7 +139,7 @@ epochs = args.epochs
 if args.dataset in ['cifar10', 'cifar100', 'tiny']:
     if args.dataset == 'cifar10':
         num_classes = 10
-    elif args.dataset == 'cifar10':
+    elif args.dataset == 'cifar100':
         num_classes = 100
     else:
         num_classes = 200
