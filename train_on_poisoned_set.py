@@ -1,6 +1,6 @@
 import torch
 import os, sys
-from torchvision import transforms
+from torchvision import datasets, transforms
 import argparse
 from torch import nn
 from utils import supervisor, tools
@@ -36,6 +36,8 @@ parser.add_argument('-seed', type=int, required=False, default=config.seed)
 parser.add_argument('-arch', type=str, required=False,
                     choices=config.parser_choices['arch'],
                     default=config.parser_default['arch'])
+parser.add_argument('-data_dir', type=str,  required=False,
+                    default=config.data_dir)
 parser.add_argument('-save_dir', type=str,  required=False,
                     default=None)
 parser.add_argument('-epochs', type=int,  required=True,
@@ -76,6 +78,9 @@ if args.dataset == 'cifar10':
             transforms.Normalize([0.4914, 0.4822, 0.4465], [0.247, 0.243, 0.261])
     ])
 
+    test_set = datasets.CIFAR10(os.path.join(args.data_dir, 'cifar10'), train=False,
+                                download=True, transform=data_transform)
+
 elif args.dataset == 'gtsrb':
 
     data_transform_aug = transforms.Compose([
@@ -88,6 +93,8 @@ elif args.dataset == 'gtsrb':
         transforms.ToTensor(),
         transforms.Normalize((0.3337, 0.3064, 0.3171), (0.2672, 0.2564, 0.2629))
     ])
+
+    raise Exception("TODO: load testset")
 
 elif args.dataset == 'cifar100':
 
@@ -102,6 +109,9 @@ elif args.dataset == 'cifar100':
             transforms.ToTensor(),
             transforms.Normalize([0.5071, 0.4865, 0.4409], [0.2673, 0.2564, 0.2762])
     ])
+
+    test_set = datasets.CIFAR100(os.path.join(args.data_dir, 'cifar100'), train=False,
+                                 download=True, transform=data_transform)
 
 elif args.dataset == 'tiny':
 
@@ -183,11 +193,6 @@ poisoned_set_loader_no_shuffle = torch.utils.data.DataLoader(
 poison_indices = torch.tensor(torch.load(poison_indices_path)).cuda()
 
 # Set Up Test Set for Debug & Evaluation
-test_set_dir = os.path.join('clean_set', args.dataset, 'test_split')
-test_set_img_dir = os.path.join(test_set_dir, 'data')
-test_set_label_path = os.path.join(test_set_dir, 'labels')
-test_set = tools.IMG_Dataset(data_dir=test_set_img_dir,
-                             label_path=test_set_label_path, transforms=data_transform)
 test_set_loader = torch.utils.data.DataLoader(
     test_set,
     batch_size=batch_size, shuffle=True, **kwargs)
