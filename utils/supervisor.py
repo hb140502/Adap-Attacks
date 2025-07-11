@@ -108,7 +108,7 @@ def get_poison_transform(poison_type, dataset_name, target_class, source_class=1
     elif dataset_name == 'tiny':
         img_size = 64
     elif dataset_name == 'imagenette':
-        img_size = 224
+        img_size = 80
     else:
         raise NotImplementedError('<Undefined> Dataset = %s' % dataset_name)
 
@@ -121,6 +121,9 @@ def get_poison_transform(poison_type, dataset_name, target_class, source_class=1
     elif dataset_name == 'tiny':
         mean = [0.4802, 0.4481, 0.3975]
         std = [0.2302, 0.2265, 0.2262]
+    elif dataset_name == 'imagenette':
+        mean = [0.4671, 0.4593, 0.4306]
+        std = [0.2692, 0.2657, 0.2884]
     elif dataset_name == 'gtsrb':
         mean = (0.3337, 0.3064, 0.3171)
         std = (0.2672, 0.2564, 0.2629)

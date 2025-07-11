@@ -89,7 +89,15 @@ elif args.dataset == 'tiny':
     img_size = 64
     num_classes = 200
 elif args.dataset == 'imagenette':
-    raise  NotImplementedError('imagenette unsupported!')
+    data_transform = transforms.Compose([
+        transforms.ToTensor()
+    ])
+    train_set = datasets.ImageFolder(root=os.path.join(data_dir, 'imagenette', 'train'),
+                                     transform=data_transform)
+    test_set = datasets.ImageFolder(root=os.path.join(data_dir, 'imagenette', 'val'),
+                                    transform=data_transform)
+    img_size = 80
+    num_classes = 10
 else:
     raise  NotImplementedError('Undefined Dataset')
 

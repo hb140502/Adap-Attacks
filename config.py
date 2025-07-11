@@ -13,6 +13,7 @@ target_class = {
     'cifar10' : 0,
     'cifar100' : 0,
     'tiny': 0,
+    'imagenette': 0,
     'gtsrb' : 2
 }
 
@@ -76,6 +77,12 @@ adaptive_patch_train_trigger_names = {
         'badnet_patch4_64.png',
         'trojan_square_64.png',
     ],
+    'imagenette': [
+        'phoenix_corner_80.png',
+        'firefox_corner_80.png',
+        'badnet_patch4_80.png',
+        'trojan_square_80.png',
+    ],
     'gtsrb': [
         'phoenix_corner_32.png',
         'firefox_corner_32.png',
@@ -103,6 +110,12 @@ adaptive_patch_train_trigger_alphas = {
         0.5,
         0.3,
     ],
+    'imagenette': [
+        0.5,
+        0.2,
+        0.5,
+        0.3,
+    ],
     'gtsrb': [
         0.5,
         0.2,
@@ -124,6 +137,10 @@ adaptive_patch_test_trigger_names = {
         'phoenix_corner_64.png',
         'badnet_patch4_64.png',
     ],
+    'imagenette': [
+        'phoenix_corner_80.png',
+        'badnet_patch4_80.png',
+    ],
     'gtsrb': [
         'firefox_corner_32.png',
         'trojan_square_32.png',
@@ -140,6 +157,10 @@ adaptive_patch_test_trigger_alphas = {
         1,
     ],
     'tiny': [
+        1,
+        1,
+    ],
+    'imagenette': [
         1,
         1,
     ],

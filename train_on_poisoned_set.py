@@ -126,6 +126,24 @@ elif args.dataset == 'tiny':
             transforms.ToTensor(),
             transforms.Normalize([0.4802, 0.4481, 0.3975], [0.2302, 0.2265, 0.2262])
     ])
+
+elif args.dataset == 'imagenette':
+
+    data_transform_aug = transforms.Compose([
+            transforms.RandomCrop(80, 4),
+            transforms.RandomRotation(10),
+            transforms.ToTensor(),
+            transforms.Normalize([0.4671, 0.4593, 0.4306], [0.2692, 0.2657, 0.2884]),
+    ])
+
+    data_transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize([0.4671, 0.4593, 0.4306], [0.2692, 0.2657, 0.2884])
+    ])
+
+    test_set = datasets.ImageFolder(os.path.join(args.data_dir, 'imagenette', 'val'), 
+                                    transform=data_transform)
+
 else:
 
     raise NotImplementedError('dataset %s not supported' % args.dataset)
@@ -133,11 +151,11 @@ else:
 
 
 
-batch_size = 100
+batch_size = 20 if args.dataset == "imagenette" else 100
 epochs = args.epochs
 
-if args.dataset in ['cifar10', 'cifar100', 'tiny']:
-    if args.dataset == 'cifar10':
+if args.dataset in ['cifar10', 'cifar100', 'tiny', 'imagenette']:
+    if args.dataset in ['cifar10', 'imagenette']:
         num_classes = 10
     elif args.dataset == 'cifar100':
         num_classes = 100
@@ -159,9 +177,6 @@ elif args.dataset == 'gtsrb':
     milestones = torch.tensor([40, 80])
     learning_rate = 0.1
 
-elif args.dataset == 'imagenette':
-    num_classes = 10
-    raise NotImplementedError('<To Be Implemented> Dataset = %s' % args.dataset)
 else:
     print('<Undefined Dataset> Dataset = %s' % args.dataset)
     raise NotImplementedError('<To Be Implemented> Dataset = %s' % args.dataset)

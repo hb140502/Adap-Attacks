@@ -22,8 +22,8 @@ if [[ ! $gpu =~ "RTX 2080 Ti" ]]; then
 fi
 
 function get_blend_trigger() {
-    if [[ $dataset == "tiny" ]]; then
-        echo "hellokitty_64.png"
+    if [[ $dataset == "imagenette" ]]; then
+        echo "hellokitty_80.png"
     else
         echo "hellokitty_32.png"
     fi
