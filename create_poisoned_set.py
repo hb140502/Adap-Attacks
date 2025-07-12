@@ -191,6 +191,7 @@ if args.poison_type in ['badnet', 'blend', 'none',
 
         from poison_tool_box import adaptive_patch
         poison_generator = adaptive_patch.poison_generator(img_size=img_size, trainset=train_set, testset=test_set,
+                                                           dataset_in_class_order=args.dataset=="imagenette",
                                                            poison_rate=args.poison_rate,
                                                            path=poison_set_img_dir,
                                                            trigger_names=config.adaptive_patch_train_trigger_names[args.dataset],

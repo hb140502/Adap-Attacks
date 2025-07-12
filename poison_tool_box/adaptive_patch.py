@@ -127,11 +127,12 @@ Poison with k triggers.
 
 class poison_generator():
 
-    def __init__(self, img_size, trainset, testset, poison_rate, path, trigger_names, alphas, test_trigger_names, test_alphas, target_class=0, cover_rate=0.01):
+    def __init__(self, img_size, trainset, testset, dataset_in_class_order, poison_rate, path, trigger_names, alphas, test_trigger_names, test_alphas, target_class=0, cover_rate=0.01):
 
         self.img_size = img_size
         self.trainset = trainset
         self.testset = testset
+        self.dataset_in_class_order = dataset_in_class_order
         self.poison_rate = poison_rate
         self.path = path  # path to save the dataset
         self.target_class = target_class  # by default : target_class = 0
@@ -183,55 +184,88 @@ class poison_generator():
         random.shuffle(id_set)
         num_poison = int(self.num_train_img * self.poison_rate)
         poison_indices = id_set[:num_poison]
-        poison_indices.sort()  # increasing order
 
         num_cover = int(self.num_train_img * self.cover_rate)
         cover_indices = id_set[num_poison:num_poison + num_cover]  # use **non-overlapping** images to cover
-        cover_indices.sort()
 
         label_set = []
-        pt = 0
-        ct = 0
-        cnt = 0
-
-        poison_id = []
-        cover_id = []
         k = len(self.trigger_marks)
 
-        for i in range(self.num_train_img):
-            img, gt = self.trainset[i]
+        # In the original code, the choice between the multiple triggers is random. 
+        # However, this is only the case under the assumption that the dataset is in random order.
+        # For imagenette, the data samples are ordered according to their label.
+        # Consequently, each trigger would only be used for a subset of the classes, and the selection would not be truly random.
+        # Therefore, we change the trigger selection method if the dataset is in class order.
+        if self.dataset_in_class_order:
+            poison_indices_per_trigger = np.array_split(poison_indices, k)
+            cover_indices_per_trigger = np.array_split(cover_indices, k)
 
-            # cover image
-            if ct < num_cover and cover_indices[ct] == i:
-                cover_id.append(cnt)
+            for i in range(self.num_train_img):
+                img, gt = self.trainset[i]
+
+                # cover image
                 for j in range(k):
-                    if ct < (j + 1) * (num_cover / k):
+                    if i in cover_indices_per_trigger[j]:
                         img = img + self.alphas[j] * self.trigger_masks[j] * (self.trigger_marks[j] - img)
-                        # img[j, :, :] = img[j, :, :] + self.alphas[j] * self.trigger_masks[j] * (self.trigger_marks[j][j, :, :] - img[j, :, :])
                         break
-                ct += 1
 
-            # poisoned image
-            if pt < num_poison and poison_indices[pt] == i:
-                poison_id.append(cnt)
-                gt = self.target_class  # change the label to the target class
+                # poisoned image
                 for j in range(k):
-                    if pt < (j + 1) * (num_poison / k):
+                    if i in poison_indices_per_trigger[j]:
+                        gt = self.target_class  # change the label to the target class
                         img = img + self.alphas[j] * self.trigger_masks[j] * (self.trigger_marks[j] - img)
-                        # img[j, :, :] = img[j, :, :] + self.alphas[j] * self.trigger_masks[j] * (self.trigger_marks[j][j, :, :] - img[j, :, :])
                         break
-                pt += 1
 
-            img_file_name = '%d.png' % cnt
-            img_file_path = os.path.join(self.path, "train", img_file_name)
-            save_image(img, img_file_path)
-            # print('[Generate Poisoned Set] Save %s' % img_file_path)
-            label_set.append(gt)
-            cnt += 1
+                img_file_name = '%d.png' % i
+                img_file_path = os.path.join(self.path, "train", img_file_name)
+                save_image(img, img_file_path)
+                label_set.append(gt)
+        else:
+            poison_indices.sort()  # increasing order
+            cover_indices.sort()
+
+            pt = 0
+            ct = 0
+            cnt = 0
+
+            poison_id = []
+            cover_id = []
+
+            for i in range(self.num_train_img):
+                img, gt = self.trainset[i]
+
+                # cover image
+                if ct < num_cover and cover_indices[ct] == i:
+                    cover_id.append(cnt)
+                    for j in range(k):
+                        if ct < (j + 1) * (num_cover / k):
+                            img = img + self.alphas[j] * self.trigger_masks[j] * (self.trigger_marks[j] - img)
+                            # img[j, :, :] = img[j, :, :] + self.alphas[j] * self.trigger_masks[j] * (self.trigger_marks[j][j, :, :] - img[j, :, :])
+                            break
+                    ct += 1
+
+                # poisoned image
+                if pt < num_poison and poison_indices[pt] == i:
+                    poison_id.append(cnt)
+                    gt = self.target_class  # change the label to the target class
+                    for j in range(k):
+                        if pt < (j + 1) * (num_poison / k):
+                            img = img + self.alphas[j] * self.trigger_masks[j] * (self.trigger_marks[j] - img)
+                            # img[j, :, :] = img[j, :, :] + self.alphas[j] * self.trigger_masks[j] * (self.trigger_marks[j][j, :, :] - img[j, :, :])
+                            break
+                    pt += 1
+
+                img_file_name = '%d.png' % cnt
+                img_file_path = os.path.join(self.path, "train", img_file_name)
+                save_image(img, img_file_path)
+                # print('[Generate Poisoned Set] Save %s' % img_file_path)
+                label_set.append(gt)
+                cnt += 1
+
+            poison_indices = poison_id
+            cover_indices = cover_id
 
         label_set = torch.LongTensor(label_set)
-        poison_indices = poison_id
-        cover_indices = cover_id
         print("Poison indices:", poison_indices)
         print("Cover indices:", cover_indices)
 
