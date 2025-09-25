@@ -5,6 +5,7 @@ import torch
 from torchvision import transforms
 from torchvision.models import vgg16, densenet121
 import os
+import timm
 
 
 data_dir = './data' # defaul clean dataset directory
@@ -30,7 +31,7 @@ parser_choices = {
     'poison_type': ['badnet', 'blend', 'adaptive_blend', 'adaptive_patch', 'adaptive_k_way', 'none'],
     'poison_rate': [i / 1000.0 for i in range(0, 500)],
     'cover_rate': [i / 1000.0 for i in range(0, 500)],
-    'arch': ['resnet18', 'vgg16', 'densenet121']
+    'arch': ['resnet18', 'vgg16', 'densenet121', 'vit_small']
 }
 
 parser_default = {
@@ -51,10 +52,16 @@ trigger_default = {
     'none' : 'none',
 }
 
+timm_vit = timm.create_model('vit_small_patch16_224', 
+        num_classes=10, 
+        patch_size=4, 
+        img_size=32)
+
 arch = {
     'resnet18': resnet.ResNet18,
     'vgg16': vgg16,
-    'densenet121': densenet121
+    'densenet121': densenet121,
+    'vit_small': timm_vit 
 }
 
 # adapitve-patch triggers for different datasets

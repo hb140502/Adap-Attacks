@@ -10,8 +10,8 @@ if [[ -z $my_dir ]]; then
     exit 1
 fi
 
-data_dir="$my_dir/record/data"
-record_dir="$my_dir/record"
+data_dir="/vol/aisy/xxu/data"
+record_dir="$my_dir/record_cn114"
 timestamp=$(date +"T%d-%m_%H-%M")
 
 pratio_label=$(echo p$pratio | tr . -)
@@ -53,7 +53,7 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
-python train_on_poisoned_set.py -dataset=$dataset -poison_type=$attack -epochs=$n_epochs -data_dir=$data_dir -save_dir=$record_dir/$attack_id $attack_opts
+python train_on_poisoned_set.py -dataset=$dataset -arch=$model -poison_type=$attack -epochs=$n_epochs -data_dir=$data_dir -save_dir=$record_dir/$attack_id $attack_opts
 
 # Handle training failure
 if [[ $? -ne 0 ]]; then

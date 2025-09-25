@@ -6,7 +6,8 @@ from torch import nn
 from utils import supervisor, tools
 import config
 from tqdm import tqdm
-
+from torch.cuda.amp import autocast, GradScaler
+import timm
 # Disable tqdm globally
 from functools import partialmethod
 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
@@ -116,7 +117,7 @@ elif args.dataset == 'cifar100':
 elif args.dataset == 'tiny':
 
     data_transform_aug = transforms.Compose([
-            transforms.RandomCrop(32, 4),
+            transforms.RandomCrop(64, 4),
             transforms.RandomRotation(10),
             transforms.ToTensor(),
             transforms.Normalize([0.4802, 0.4481, 0.3975], [0.2302, 0.2265, 0.2262])
@@ -126,6 +127,8 @@ elif args.dataset == 'tiny':
             transforms.ToTensor(),
             transforms.Normalize([0.4802, 0.4481, 0.3975], [0.2302, 0.2265, 0.2262])
     ])
+    test_set = datasets.ImageFolder(os.path.join(args.data_dir, 'tiny/tiny-imagenet-200', 'val'), 
+                                    transform=data_transform)
 
 elif args.dataset == 'imagenette':
 
@@ -152,6 +155,8 @@ else:
 
 
 batch_size = 20 if args.dataset == "imagenette" else 100
+if args.dataset == "tiny":
+    batch_size = 256
 epochs = args.epochs
 
 if args.dataset in ['cifar10', 'cifar100', 'tiny', 'imagenette']:
@@ -161,6 +166,7 @@ if args.dataset in ['cifar10', 'cifar100', 'tiny', 'imagenette']:
         num_classes = 100
     else:
         num_classes = 200
+
 
     arch = config.arch[args.arch]
     momentum = 0.9
@@ -182,7 +188,7 @@ else:
     raise NotImplementedError('<To Be Implemented> Dataset = %s' % args.dataset)
 
 
-kwargs = {'num_workers': 2, 'pin_memory': True}
+kwargs = {'num_workers': 6, 'pin_memory': True}
 
 # Set Up Poisoned Set
 if args.save_dir:
@@ -196,7 +202,7 @@ poison_indices_path = os.path.join(poison_set_dir, 'poison_indices')
 
 poisoned_set = tools.IMG_Dataset(data_dir=poisoned_set_img_dir,
                                  label_path=poisoned_set_label_path, transforms=data_transform if args.no_aug else data_transform_aug)
-
+print('batch_size: ', batch_size)
 poisoned_set_loader = torch.utils.data.DataLoader(
     poisoned_set,
     batch_size=batch_size, shuffle=True, **kwargs)
@@ -220,7 +226,31 @@ poison_transform = supervisor.get_poison_transform(poison_type=args.poison_type,
                                                    trigger_name=args.trigger, args=args)
 
 # Train Code
-model = arch(num_classes=num_classes)
+if args.arch=='vit_small':
+    if args.dataset=='cifar10':
+        num_classes = 10
+        patch_size = 4
+        img_size = 32
+    elif args.dataset=='cifar100':
+        num_classes = 100
+        patch_size = 4
+        img_size = 32
+    elif args.dataset=='tiny':
+        num_classes = 200
+        patch_size = 8
+        img_size = 64
+    elif args.dataset=='imagenette':
+        num_classes = 10
+        patch_size = 8
+        img_size = 80
+        
+    model = timm.create_model('vit_small_patch16_224', 
+        num_classes=num_classes, 
+        patch_size=patch_size, 
+        img_size=img_size)
+else:
+    model = arch(num_classes=num_classes)
+
 milestones = milestones.tolist()
 model = nn.DataParallel(model)
 model = model.cuda()
@@ -240,12 +270,21 @@ if os.path.exists(model_dir): # exit if there is an already trained model
 
 criterion = nn.CrossEntropyLoss().cuda()
 optimizer = torch.optim.SGD(model.parameters(), learning_rate, momentum=momentum, weight_decay=weight_decay)
-scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=milestones, gamma=gamma)
+# scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=milestones, gamma=gamma)
+
+if args.dataset == 'tiny':
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, eta_min=0)
+else:
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=milestones, gamma=gamma)
+
+
 
 if args.poison_type == 'TaCT':
     source_classes = [config.source_class]
 else:
     source_classes = None
+
+scaler = GradScaler()
 
 for epoch in range(1, epochs+1):  # train backdoored base model
     # Train
@@ -255,12 +294,18 @@ for epoch in range(1, epochs+1):  # train backdoored base model
     for data, target in tqdm(poisoned_set_loader):
         optimizer.zero_grad()
         data, target = data.cuda(), target.cuda()  # train set batch
-        output = model(data)
+        with autocast():
+            output = model(data)
+            loss = criterion(output, target)
         preds.append(output.argmax(dim=1))
         labels.append(target)
-        loss = criterion(output, target)
-        loss.backward()
-        optimizer.step()
+        
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
+
+        # loss.backward()
+        # optimizer.step()
     preds = torch.cat(preds, dim=0)
     labels = torch.cat(labels, dim=0)
     train_acc = (torch.eq(preds, labels).int().sum()) / preds.shape[0]
